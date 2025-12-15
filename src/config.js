@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:8080/api";
+export const API_BASE_URL = "https://resumebuilder-production-e8a7.up.railway.app/api";
 
 export const ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/auth/login`,
