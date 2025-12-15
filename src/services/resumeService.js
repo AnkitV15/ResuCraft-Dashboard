@@ -2,8 +2,9 @@ import api from './api';
 
 export const resumeService = {
     // Matches @PostMapping("/api/resumes/create")
-    createResume: async (title) => {
-        const response = await api.post('/api/resumes/create', { title });
+    createResume: async (resumeData) => {
+        const response = await api.post('/api/resumes/create', resumeData);
+        console.log("Create Resume Response:", response);
         return response.data;
     },
 

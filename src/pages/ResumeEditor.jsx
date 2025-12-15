@@ -13,7 +13,7 @@ import ElegantTemplate from '../components/templates/ElegantTemplate';
 
 const ResumeEditor = ({ user, initialData, onSave, onBack, onUpgrade }) => {
   const [activeTab, setActiveTab] = useState('content');
-  const [selectedTemplate, setSelectedTemplate] = useState(initialData?.templates?.Theme || 'modern');
+  const [selectedTemplate, setSelectedTemplate] = useState(initialData?.templates?.theme || 'modern');
   const [activeSection, setActiveSection] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const resumeRef = useRef(null);
@@ -82,7 +82,7 @@ const ResumeEditor = ({ user, initialData, onSave, onBack, onUpgrade }) => {
         })) || [],
         educations: initialData.education || [],
         skills: initialData.skills?.map(s => (typeof s === 'string' ? { name: s, progress: 0 } : s)) || [],
-        templates: { Theme: selectedTemplate, colorPalette: ['#2563eb'] }
+        templates: { theme: selectedTemplate, colorPalette: ['#2563eb'] }
       };
     }
 
@@ -106,7 +106,7 @@ const ResumeEditor = ({ user, initialData, onSave, onBack, onUpgrade }) => {
       setSelectedTemplate(templateId);
       setResumeData(prev => ({
         ...prev,
-        templates: { ...prev.templates, Theme: templateId }
+        templates: { ...prev.templates, theme: templateId }
       }));
     }
   };
@@ -120,15 +120,24 @@ const ResumeEditor = ({ user, initialData, onSave, onBack, onUpgrade }) => {
 
   const handleSaveClick = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 600));
-    onSave({
-      ...resumeData,
-      templates: { ...resumeData.templates, Theme: selectedTemplate }
-    });
-    setIsSaving(false);
-    onBack();
-  };
+    try {
+      const payload = {
+        ...resumeData,
+        templates: { ...resumeData.templates, Theme: selectedTemplate }
+      };
+      const savedResume = await onSave(payload);
 
+      // If the save was successful, navigate back to the dashboard
+      if (savedResume) {
+        onBack();
+      }
+    } catch (error) {
+      console.error("Save failed:", error);
+      // You could add a user-facing error message here
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const handleDownloadPDF = () => {
     const originalTitle = document.title;
     document.title = resumeData.title || 'Resume';

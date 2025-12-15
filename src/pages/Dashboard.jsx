@@ -60,10 +60,10 @@ const Dashboard = ({ user, resumes, onCreateNew, onEdit, onDelete, onLogout, onU
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {resumes.map((resume) => (
-              <div key={resume.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition overflow-hidden flex flex-col group">
+              <div key={resume._id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition overflow-hidden flex flex-col group">
                 {/* Preview Area */}
                 <div
-                  className={`h-40 ${TEMPLATES.find(t => t.id === (resume.templates?.Theme || 'modern'))?.previewColor || 'bg-gray-100'} p-4 relative`}
+                  className={`h-40 ${TEMPLATES.find(t => t.id === (resume.templates?.theme || 'modern'))?.previewColor || 'bg-gray-100'} p-4 relative`}
                   onClick={() => onEdit(resume)}
                 >
                   <div className="w-full h-full bg-white/20 backdrop-blur-sm rounded border border-white/30 p-4 transform group-hover:scale-105 transition duration-300">
@@ -86,7 +86,7 @@ const Dashboard = ({ user, resumes, onCreateNew, onEdit, onDelete, onLogout, onU
                       <Edit className="w-3 h-3" /> Edit
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); onDelete(resume.id); }}
+                      onClick={(e) => { e.stopPropagation(); onDelete(resume._id); }}
                       className="px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
                     >
                       <Trash2 className="w-4 h-4" />

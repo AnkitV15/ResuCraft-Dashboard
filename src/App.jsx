@@ -6,6 +6,7 @@ import VerifyProcess from './components/auth/VerifyProcess.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import LandingPage from './pages/LandingPages.jsx';
 import ResumeEditor from './pages/ResumeEditor.jsx';
+import { resumeService } from './services/resumeService.js';
 
 const App = () => {
   // State for Navigation and Auth
@@ -17,11 +18,25 @@ const App = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Resume Data Management
-  const [resumes, setResumes] = useState(() => {
-    const saved = localStorage.getItem('resumes');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [resumes, setResumes] = useState([]);
   const [currentResume, setCurrentResume] = useState(null);
+
+  // Fetch resumes from server on authenticated load
+  useEffect(() => {
+    const fetchResumes = async () => {
+      if (isAuthenticated) {
+        try {
+          const serverResumes = await resumeService.getUserResumes();
+          setResumes(serverResumes);
+        } catch (error) {
+          console.error("Failed to fetch resumes:", error);
+          // Optionally, handle the error, e.g., show a notification
+        }
+      }
+    };
+
+    fetchResumes();
+  }, [isAuthenticated]);
 
   // Check for existing token on load
   useEffect(() => {
@@ -40,11 +55,6 @@ const App = () => {
       setIsAuthenticated(true);
     }
   }, []);
-
-  // Update local storage whenever resumes change
-  useEffect(() => {
-    localStorage.setItem('resumes', JSON.stringify(resumes));
-  }, [resumes]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -67,31 +77,35 @@ const App = () => {
     setCurrentView('verify_sent');
   };
 
-  const handleSaveResume = (resumeData) => {
-    let updatedResumes;
-    const now = new Date().toISOString();
-
-    if (resumeData.id) {
-      updatedResumes = resumes.map(r =>
-        r.id === resumeData.id ? { ...resumeData, updatedAt: now } : r
-      );
-    } else {
-      const newResume = {
-        ...resumeData,
-        id: Date.now().toString(),
-        createdAt: now,
-        updatedAt: now
-      };
-      updatedResumes = [...resumes, newResume];
+  const handleSaveResume = async (resumeData) => {
+    try {
+      let savedResume;
+      if (resumeData._id) {
+        // Update existing resume
+        savedResume = await resumeService.updateResume(resumeData._id, resumeData);
+        setResumes(resumes.map(r => (r._id === savedResume._id ? savedResume : r)));
+      } else {
+        // Create new resume
+        savedResume = await resumeService.createResume(resumeData);
+        setResumes(prevResumes => [...prevResumes, savedResume]);
+      }
+      return savedResume; // Return the saved data to the caller
+    } catch (error) {
+      console.error("Failed to save resume:", error);
+      throw error; // Re-throw so the editor knows the save failed
     }
-
-    setResumes(updatedResumes);
-    setCurrentResume(null);
   };
 
-  const handleDeleteResume = (id) => {
+  const handleDeleteResume = async (id) => {
     if (window.confirm("Are you sure you want to delete this resume?")) {
-      setResumes(resumes.filter(r => r.id !== id));
+      try {
+        await resumeService.deleteResume(id);
+        console.log("Resume deleted successfully with id:", id);
+        setResumes(resumes.filter(r => r._id !== id));
+      } catch (error) {
+        console.error("Failed to delete resume:", error);
+        // Optionally, show an error to the user
+      }
     }
   };
 
@@ -100,8 +114,10 @@ const App = () => {
     setCurrentView('editor');
   };
 
-  const handleCreateNew = () => {
-    setCurrentResume(null);
+  const handleCreateNew = async () => {
+    const savedResume = await resumeService.createResume({ "title": "New Resume" }); // Create with empty data
+    setResumes(prevResumes => [...prevResumes, savedResume]);
+    setCurrentResume(savedResume); // Set the newly created resume as the current one
     setCurrentView('editor');
   };
 
